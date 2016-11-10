@@ -79,12 +79,6 @@ class Grid(dict):
                 pass
 
     @property
-    def somename(self):
-        for cell in self.traversable:
-            if not cell.visited and any(c.visited for c in cell.neighbors.values()):
-                yield cell
-
-    @property
     def traversable(self):
         for row, cols in self.items():
             for col, cell in cols.items():
@@ -96,7 +90,56 @@ class Grid(dict):
         return [[str(col[1]) for col in sorted(row[1].items())] for row in sorted(self.items())]
 
     def __str__(self):
-        return '\n'.join(' '.join(row) for row in self.printable)
+        return '\n'.join(' '.join(row) for row in reversed(self.printable))
+
+
+class AStar(Grid):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, walls = kwargs.get('walls', None))
+        self.origin = None
+        self.dest = None
+
+        if 'origin' in kwargs:
+            x, y = kwargs['origin']
+            self.origin = self[x][y]
+
+        if 'dest' in kwargs:
+            x, y = kwargs['dest']
+            self.dest = self[x][y]
+        else:
+            self.dest = list(self.traversable)[0]
+        self.dest.visited = True
+        self.dest.direction = 'X'
+
+    def point(self, cell):
+
+        direction, prev = list(filter(lambda x: x[1].visited, cell.neighbors.items()))[0]
+        cell.direction = getattr(Directions, direction)
+        cell.visited = True
+        cell.distance = prev.distance + 1
+
+    def itercells(self):
+        for cell in self.traversable:
+            if not cell.visited and any(c in self.previous for c in cell.neighbors.values()):
+                yield cell
+    
+    def iterpath(self):
+        self.previous = [self.dest]
+        while any(not c.visited for c in self.traversable):
+            yield self.itercells()
+
+    def path(self):
+        self.previous = [self.dest]
+        self.nextprev = []
+        for cycle in self.iterpath():
+            for cell in cycle:
+                self.point(cell)
+                self.nextprev.append(cell)
+            self.previous = self.nextprev.copy()
+            self.nextprev = []
+
+
+
 
 
 
