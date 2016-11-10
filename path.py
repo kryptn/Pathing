@@ -53,7 +53,10 @@ class Cell:
 
 class Grid(dict):
 
-    def __init__(self, x, y, walls):
+    def __init__(self, x, y, walls=None):
+        if not walls:
+            walls = []
+        walls = list(walls)
         for col, row in itergrid(x, y):
             passable = False if (row, col) in walls else True
             if row not in self:
