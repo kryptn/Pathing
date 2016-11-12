@@ -86,11 +86,20 @@ class Grid(dict):
                     yield cell
 
     @property
+    def visited(self):
+        return [cell for cell in self.traversable if cell.visited]
+
+    @property
     def printable(self):
         return [[str(col[1]) for col in sorted(row[1].items())] for row in sorted(self.items())]
 
+    def debug_print(self):
+        for x in range(self.width):
+            print(' '.join(str(self[y][x]) for y in reversed(list(range(self.height)))))
+
+
     def __str__(self):
-        return '\n'.join(' '.join(row) for row in reversed(self.printable))
+        return '\n'.join(' '.join(row) for row in self.printable)
 
 
 class AStar(Grid):
@@ -111,35 +120,31 @@ class AStar(Grid):
         self.dest.visited = True
         self.dest.direction = 'X'
 
-    def point(self, cell):
+    def touching(self):
+        # return all traversable cells one step away from an already visited one
+        cond = lambda cell: any(c.visited for c in cell.neighbors.values()) and not cell.visited
+        return [cell for cell in self.traversable if cond(cell)]
 
-        direction, prev = list(filter(lambda x: x[1].visited, cell.neighbors.items()))[0]
-        cell.direction = getattr(Directions, direction)
-        cell.visited = True
-        cell.distance = prev.distance + 1
-
-    def itercells(self):
-        for cell in self.traversable:
-            if not cell.visited and any(c in self.previous for c in cell.neighbors.values()):
+    def itertouching(self):
+        cycle = self.touching()
+        iteration = 0
+        while cycle:
+            print(iteration)
+            print(self)
+            for cell in cycle:
                 yield cell
-    
-    def iterpath(self):
-        self.previous = [self.dest]
-        while any(not c.visited for c in self.traversable):
-            yield self.itercells()
+            cycle = self.touching()
+            iteration += 1
+        print(iteration)
+        print(self)
 
     def path(self):
-        self.previous = [self.dest]
-        self.nextprev = []
-        for cycle in self.iterpath():
-            for cell in cycle:
-                self.point(cell)
-                self.nextprev.append(cell)
-            self.previous = self.nextprev.copy()
-            self.nextprev = []
-
-
-
+        for cell in self.itertouching():
+            visited = (c for c in cell.neighbors.items() if c[1].visited)
+            direction, prev = sorted(visited, key=lambda x: x[1].distance).pop()
+            cell.visited = True
+            cell.direction = getattr(Directions, direction)
+            cell.distance = prev.distance + 1
 
 
 
