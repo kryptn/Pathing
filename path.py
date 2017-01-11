@@ -1,4 +1,3 @@
-
 def itergrid(x, y, ox=0, oy=0):
     for _x in range(x):
         for _y in range(y):
@@ -53,16 +52,22 @@ class Cell:
 
 class Grid(dict):
 
-    def __init__(self, x, y, walls=None):
-        if not walls:
-            walls = []
-        walls = list(walls)
-        for col, row in itergrid(x, y):
-            passable = False if (row, col) in walls else True
-            if row not in self:
-                self[row] = dict()
-            self[row][col] = Cell(row, col, passable)
+    def __init__(self, x, y, *args, **kwargs):
+
+        walls = kwargs.get('walls', None)
         
+        if walls and hasattr(walls, '__iter__'):
+            dela = lambda x: x in walls
+        elif walls and callable(walls):
+            dela = walls
+        else:
+            dela = lambda x: True
+        
+        for col, row in itergrid(x, y):
+            if row not in self:
+                self[row] = {}
+            self[row][col] = Cell(row, col, dela((row, col)))
+            
         for cell in self.traversable:
             self.fill_neighbors(cell)
 

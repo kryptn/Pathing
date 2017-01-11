@@ -5,7 +5,7 @@ from path import itergrid, Directions, Cell, Grid
 class TestBase(unittest.TestCase):
     def setUp(self):
         self.cell = Cell(1, 1)
-        self.grid = Grid(3, 3, [(0, 1)])
+        self.grid = Grid(3, 3, walls=[(0, 1)])
 
 class TestCell(TestBase):
     def test_surrounding_empty_positions(self):
